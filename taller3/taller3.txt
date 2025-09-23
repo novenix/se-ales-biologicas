@@ -1,0 +1,16 @@
+Ejercicio – Septiembre 2 de 2025
+1. A partir de la señal extracelular trabajada en clase, detectar los spikes y
+extraer la información de localización de cada uno.
+2. A partir de la localización de cada pico del spike, construir una matriz de
+eventos, con una ventana de 1ms antes y 1ms después del pico evento.
+En la matriz las filas son spikes diferentes y las columnas la dimensión
+tiempo. Puede graficar la superposición de los spikes, con plot(eventos');
+3. Construya una matriz de características, donde extraiga el máximo,
+mínimo y la pendiente (entre máximo y mínimo) de cada uno de los
+eventos. La matriz resultante debe tener en las filas los eventos y en las
+columnas las 3 características. Grafique el espacio de características.
+4. Utilice el algoritmo kmeans() de Matlab o Python, para realizar el
+clustering. Pruebe un número de clusters dependiendo de lo observado
+en la gráfica del punto 2.
+5. Grafique vectores binarios para cada spike-train de las neuronas
+separadas en 4.
