@@ -73,7 +73,10 @@ print(f"Desviación estándar: {std_intra:.4f} mV")
 print(f"Umbral calculado: {threshold_intra:.4f} mV")
 
 # Aplicar find_peaks con el umbral calculado
-peaks_intra, properties = find_peaks(intracelular, height=threshold_intra, distance=int(0.001*Fs))
+peaks_intra, properties = find_peaks(intracelular,
+                                   height=threshold_intra,
+                                   distance=int(0.001*Fs),
+                                   prominence=std_intra*0.5)  # Prominencia para reducir falsos positivos
 
 print(f"Número de picos detectados: {len(peaks_intra)}")
 print(f"Distancia mínima entre picos: {int(0.001*Fs)} muestras ({0.001*1000} ms)")
