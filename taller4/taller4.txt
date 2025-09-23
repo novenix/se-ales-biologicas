@@ -1,0 +1,15 @@
+Ejercicio – Agosto 27 de 2024
+• Cargue y grafique la señal ECG del archivo 0001m.mat, con una frecuencia
+de muestreo de 256Hz.
+• Implemente el algoritmo Pan-Tompkins para este archivo, graficando cada
+uno de los pasos, como en la diapositiva 14. Para los pasos de
+diferenciación e integración, utilice una ventana b apropiada y la función
+filter. Nota: Como es un filtro FIR, sólo tiene b y a = 1 (Ver ejemplo en la
+ayuda de filter())
+• Realice la umbralización estadística sobre la señal integrada, y utilice
+findpeaks, para encontrar los picos R.
+• Diseñe una estrategia para encontrar el pico de las ondas P, Q, S, y T. Puede
+aislar la ventana de cada evento (loc de pico R +/- 300 o 400 ms) y
+encontrar los mínimos y máximos en la ventana antes y después de cada R.
+• A partir de los picos R, calcule el tacograma (HRV). Además, calcule la
+frecuencia cardiaca global. Dé los valores en bpm.

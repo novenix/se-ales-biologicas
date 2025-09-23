@@ -236,16 +236,32 @@ for n in n_clusters_range:
     print(f"  - {n} clusters: inercia = {kmeans_temp.inertia_:.2f}, silhouette = {silhouette_avg:.3f}")
 
 # Método del codo: buscar el punto donde la reducción de inercia se estabiliza
+print("\n✓ Analizando método del codo:")
+print("  Inertias por número de clusters:")
+for i, (n, inercia) in enumerate(zip(n_clusters_range, inertias)):
+    print(f"    {n} clusters: {inercia:.2f}")
+
 # Calcular diferencias de segunda derivada para encontrar el "codo"
 if len(inertias) >= 3:
-    # Calcular diferencias de segunda derivada
+    # Calcular diferencias de primera y segunda derivada
     diff1 = np.diff(inertias)
     diff2 = np.diff(diff1)
+
+    print("  Diferencias de primera derivada (reducción de inercia):")
+    for i, d in enumerate(diff1):
+        print(f"    {list(n_clusters_range)[i]} -> {list(n_clusters_range)[i+1]}: {d:.2f}")
+
+    print("  Diferencias de segunda derivada (aceleración del cambio):")
+    for i, d in enumerate(diff2):
+        print(f"    {list(n_clusters_range)[i+1]} clusters: {d:.2f}")
+
     # El codo está donde la segunda derivada es más positiva (menor aceleración)
     codo_idx = np.argmax(diff2) + 2  # +2 porque diff2 tiene 2 elementos menos
     n_clusters_codo = list(n_clusters_range)[codo_idx]
+    print(f"  Codo detectado en: {n_clusters_codo} clusters (mayor segunda derivada: {diff2[codo_idx-2]:.2f})")
 else:
     n_clusters_codo = 3
+    print("  No hay suficientes puntos para calcular el codo, usando 3 por defecto")
 
 # Silhouette score: elegir el número con mayor silhouette score
 n_clusters_silhouette = list(n_clusters_range)[np.argmax(silhouette_scores)]
