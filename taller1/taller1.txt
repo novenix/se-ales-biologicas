@@ -1,0 +1,19 @@
+Ejercicio – 12 de Agosto
+1. Abra en Matlab o Python el archivo Data_Clase3_Vis.mat
+2. En el archivo se encuentran los datos de las señales biomédicas ‘co2’
+(Respiración), ‘pleth’ (photoplethysmography – pulsioximetría) y ‘ecg’
+(electrocardiograma)
+3. Además, se encuentra la frecuencia de muestreo, asignada a la variable ‘Fs’.
+Con la frecuencia de muestreo, puede conocer el tiempo de muestreo ‘Ts’
+4. Construya un vector de tiempo ‘vtime’, que vaya desde 0, hasta el tiempo
+total de la señal, en pasos de Ts. Para encontrar el tiempo total de la señal,
+necesita multiplicar la longitud de la señal (número de muestras y Ts)
+5. Cree un figure y grafique en 3 subplots las señales (co2, ecg y pleth) con
+respecto al tiempo (vtime). Ponga los títulos de la gráfica y las unidades del
+eje del tiempo.
+6. Entienda la función linkaxes (Matlab) o el parámetro sharex (Python),
+que permite anclar los ejes, de manera que si se hace un zoom en un
+subplot, se hace zoom en el otro. Aplíquela para anclar el eje x de los 3
+subplots.
+7. Debe obtener la figuras que se muestran en las siguientes diapositivas
+(original y con zoom).

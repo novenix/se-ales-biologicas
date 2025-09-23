@@ -1,0 +1,22 @@
+Ejercicio Matlab – 19 de agosto
+• Abra el archivo IntraExtracelular.mat
+• Aquí encuentra las variables variable1 y variable2. La primera corresponde a una matriz de 2 canales diferentes
+(electrodos intracelular y extracelular, respectivamente) y 221077 muestras de tiempo. La segunda, es una
+estructura con información del archivo, de donde puede extraer la frecuencia de muestreo Fs.
+• Grafique en un figure las señales intracelular y extracelular (2 subplots). Utilice el vector de tiempo, títulos y
+linkaxes.
+• Para la señal intracelular, calcule un umbral estadístico y aplíquelo utilizando la función findpeaks() de Matlab
+o Python. Revise la ayuda de esta función, para encontrar el parámetro que permite definir un valor umbral.
+• La salida de findpeaks, corresponde a un vector con la localización de los picos (muestras). Con esta
+información, cree un vector de ceros de la misma longitud de la señal (zeros()) y asigne un 1 (o -1) en las
+posiciones de localización de los picos.
+• Sobreponga en color rojo, la localización de los picos sobre la señal intra. Para esto utilice la función hold on;
+(para sobreponer sobre un plot otro plot).
+• Para la señal extracelular, antes de detectar los picos, es necesario filtrar la señal. Para esto:
+– Calcule los coeficientes del filtro, por medio de la interfaz filterDesigner o pyfda. Compare diferentes
+tipos de filtros y exporte los coeficientes al Workspace, para usarlos con la función respectiva.
+– Opcional: si desea calcular los coeficientes por medio de código, utilice el código de la diapo 16 con
+frecuencias que considere adecuada. Use fvtool para ver la respuesta en frecuencia del filtro y compararlos.
+– Utilice la función filtfilt, que hace automáticamente la corrección del corrimiento de fase.
+– Una vez filtrada, encuentre el umbral estadístico y grafique la señal binaria sobrepuesta a la señal extra.
+• Nota: Diseñe una estrategia para tratar los picos de la señal extracelular, ya que son negativos.
