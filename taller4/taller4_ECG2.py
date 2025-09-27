@@ -66,9 +66,9 @@ plt.show(block=False)
 
 print("\nIMPLEMENTACIÓN ALGORITMO PAN-TOMPKINS")
 
-# PASO 1: Filtro paso-banda 5-15Hz
+# PASO 1: Filtro paso-banda 5-35Hz (aumentado significativamente)
 lowcut = 5.0
-highcut = 15.0
+highcut = 35.0  # Aumentado a 35 Hz para capturar todos los componentes QRS
 nyquist = Fs / 2
 low = lowcut / nyquist
 high = highcut / nyquist
@@ -87,7 +87,7 @@ ecg_diff = signal.lfilter(diff_coeffs, [1], ecg_filtered)
 ecg_squared = ecg_diff ** 2
 
 # PASO 4: Integración con ventana móvil
-window_samples = int(0.15 * Fs)  # 150ms en muestras
+window_samples = int(0.08 * Fs)  # Reducido a 80ms para mejor resolución temporal
 print(f"  - Ventana de integración: {window_samples} muestras ({window_samples/Fs*1000:.0f} ms)")
 
 # Crear ventana de integración (todos unos)
@@ -106,7 +106,7 @@ axes[0].grid(True, alpha=0.3)
 
 # Filtro paso-banda
 axes[1].plot(vtime, ecg_filtered, 'g-', linewidth=0.8)
-axes[1].set_title('Filtro paso-banda\n5-15Hz')
+axes[1].set_title('Filtro paso-banda\n5-35Hz')
 axes[1].set_ylabel('Amplitud (μV)')
 axes[1].grid(True, alpha=0.3)
 
@@ -124,7 +124,7 @@ axes[3].grid(True, alpha=0.3)
 
 # Integración
 axes[4].plot(vtime, ecg_integrated, 'c-', linewidth=0.8)
-axes[4].set_title('Integración\nventana de 150ms')
+axes[4].set_title('Integración\nventana de 80ms')
 axes[4].set_xlabel('Tiempo (s)')
 axes[4].set_ylabel('Amplitud integrada')
 axes[4].grid(True, alpha=0.3)
@@ -142,12 +142,12 @@ std_integrated = np.std(ecg_integrated)
 
 # Umbral adaptativo más sofisticado
 # Usar percentil en lugar de máximo para evitar outliers
-threshold_factor = 0.5  # Factor para el umbral
-percentile_95 = np.percentile(ecg_integrated, 95)
+threshold_factor = 0.05  # Ultra bajo para máxima sensibilidad
+percentile_95 = np.percentile(ecg_integrated, 60)  # Usar percentil 60 para mayor sensibilidad
 threshold = threshold_factor * percentile_95
 
 # Umbral alternativo basado en estadísticas
-threshold_stat = mean_integrated + 3 * std_integrated
+threshold_stat = mean_integrated + 0.5 * std_integrated  # Solo 0.5 desviaciones estándar
 
 # Usar el menor de los dos umbrales para ser más sensible
 threshold = min(threshold, threshold_stat)
@@ -161,13 +161,13 @@ print(f"  - Umbral por percentil: {threshold_factor * percentile_95:.4f}")
 print(f"  - Umbral estadístico: {threshold_stat:.4f}")
 
 # Detectar picos R usando find_peaks
-# Distancia mínima entre picos R: ~0.4s (150 bpm máximo) = 0.4 * Fs muestras
-min_distance = int(0.4 * Fs)  # Mínimo 400ms entre picos R
+# Distancia mínima entre picos R: ~0.35s (170 bpm máximo) = 0.35 * Fs muestras
+min_distance = int(0.35 * Fs)  # 350ms para permitir detección de más picos
 
 peaks_R, properties = find_peaks(ecg_integrated,
                                 height=threshold,
                                 distance=min_distance,
-                                prominence=std_integrated)
+                                prominence=std_integrated*0.1)  # Prominencia mínima
 
 print(f"Picos R detectados: {len(peaks_R)}")
 print(f"Distancia mínima entre picos: {min_distance} muestras ({min_distance/Fs:.2f} s)")
