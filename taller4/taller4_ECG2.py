@@ -5,24 +5,22 @@ from scipy.signal import butter, filtfilt, find_peaks
 from scipy import signal
 import os
 
-print("=== TALLER 4: ALGORITMO PAN-TOMPKINS - ECG2 ===")
+print("TALLER 4: ALGORITMO PAN-TOMPKINS - ECG2")
 print("Detección de QRS y análisis de variabilidad cardíaca\n")
 
 # 1. Cargar datos
 current_dir = os.path.dirname(os.path.abspath(__file__))
 csv_file_path = os.path.join(current_dir, 'ECG1.csv')
 
-print("✓ Cargando datos ECG...")
 data = pd.read_csv(csv_file_path, sep=';')
 
 # Extraer columnas relevantes
 tiempo_str = data['Tiempo'].values
 ecg_signal = data['ECG 2'].values  # Usamos ECG 2 (señal original, NO filtrada)
 
-print(f"✓ Datos cargados: {len(ecg_signal)} muestras")
+print(f"Datos cargados: {len(ecg_signal)} muestras")
 
 # Convertir timestamps a segundos
-print("✓ Procesando timestamps...")
 # Extraer solo la parte de tiempo (sin fecha)
 tiempo_parts = [t.split(' ')[-1] for t in tiempo_str]
 # Convertir a segundos desde el primer timestamp
@@ -43,12 +41,12 @@ tiempo_sec = np.array(tiempo_sec)
 # Calcular frecuencia de muestreo real
 dt_mean = np.mean(np.diff(tiempo_sec))
 fs_real = 1 / dt_mean
-print(f"✓ Frecuencia de muestreo calculada: {fs_real:.1f} Hz")
-print(f"✓ Duración total: {tiempo_sec[-1]:.1f} segundos")
+print(f"Frecuencia de muestreo calculada: {fs_real:.1f} Hz")
+print(f"Duración total: {tiempo_sec[-1]:.1f} segundos")
 
 # Usar Fs=256Hz como especifica el taller, pero mostrar la real para comparación
 Fs = 256.0
-print(f"✓ Usando Fs = {Fs} Hz para el análisis (según especificación del taller)")
+print(f"Usando Fs = {Fs} Hz para el análisis (según especificación del taller)")
 
 # Crear vector de tiempo uniforme basado en Fs=256Hz
 N = len(ecg_signal)
@@ -66,10 +64,9 @@ ax.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.show(block=False)
 
-print("\n=== IMPLEMENTACIÓN ALGORITMO PAN-TOMPKINS ===")
+print("\nIMPLEMENTACIÓN ALGORITMO PAN-TOMPKINS")
 
 # PASO 1: Filtro paso-banda 5-15Hz
-print("✓ Paso 1: Filtro paso-banda 5-15Hz...")
 lowcut = 5.0
 highcut = 15.0
 nyquist = Fs / 2
@@ -81,18 +78,15 @@ b, a = butter(order, [low, high], btype='band')
 ecg_filtered = filtfilt(b, a, ecg_signal)
 
 # PASO 2: Diferenciación (pendiente de 4 muestras)
-print("✓ Paso 2: Diferenciación con pendiente de 4 muestras...")
 # H(z) = 0.1(2 + z^-1 - z^-3 - 2z^-4)
 # En forma de coeficientes: b = [0.2, 0.1, 0, -0.1, -0.2], a = [1]
 diff_coeffs = np.array([0.2, 0.1, 0, -0.1, -0.2])
 ecg_diff = signal.lfilter(diff_coeffs, [1], ecg_filtered)
 
 # PASO 3: Cuadrado
-print("✓ Paso 3: Elevación al cuadrado...")
 ecg_squared = ecg_diff ** 2
 
 # PASO 4: Integración con ventana móvil
-print("✓ Paso 4: Integración con ventana móvil de 150ms...")
 window_samples = int(0.15 * Fs)  # 150ms en muestras
 print(f"  - Ventana de integración: {window_samples} muestras ({window_samples/Fs*1000:.0f} ms)")
 
@@ -100,7 +94,6 @@ print(f"  - Ventana de integración: {window_samples} muestras ({window_samples/
 integration_window = np.ones(window_samples) / window_samples
 ecg_integrated = signal.lfilter(integration_window, [1], ecg_squared)
 
-print("✓ Procesamiento Pan-Tompkins completado")
 
 # Graficar todos los pasos del algoritmo Pan-Tompkins
 fig2, axes = plt.subplots(5, 1, figsize=(16, 12), sharex=True)
@@ -141,8 +134,7 @@ plt.tight_layout()
 plt.show(block=False)
 
 # PASO 5: Umbralización estadística y detección de picos R
-print("\n=== DETECCIÓN DE PICOS R ===")
-print("✓ Aplicando umbralización estadística...")
+print("\nDETECCIÓN DE PICOS R")
 
 # Calcular umbral adaptativo
 mean_integrated = np.mean(ecg_integrated)
@@ -160,11 +152,11 @@ threshold_stat = mean_integrated + 3 * std_integrated
 # Usar el menor de los dos umbrales para ser más sensible
 threshold = min(threshold, threshold_stat)
 
-print(f"✓ Estadísticas de la señal integrada:")
+print(f"Estadísticas de la señal integrada:")
 print(f"  - Media: {mean_integrated:.4f}")
 print(f"  - Desviación estándar: {std_integrated:.4f}")
 print(f"  - Percentil 95: {percentile_95:.4f}")
-print(f"✓ Umbral usado: {threshold:.4f}")
+print(f"Umbral usado: {threshold:.4f}")
 print(f"  - Umbral por percentil: {threshold_factor * percentile_95:.4f}")
 print(f"  - Umbral estadístico: {threshold_stat:.4f}")
 
@@ -177,19 +169,19 @@ peaks_R, properties = find_peaks(ecg_integrated,
                                 distance=min_distance,
                                 prominence=std_integrated)
 
-print(f"✓ Picos R detectados: {len(peaks_R)}")
-print(f"✓ Distancia mínima entre picos: {min_distance} muestras ({min_distance/Fs:.2f} s)")
+print(f"Picos R detectados: {len(peaks_R)}")
+print(f"Distancia mínima entre picos: {min_distance} muestras ({min_distance/Fs:.2f} s)")
 
 # Calcular intervalos RR (en segundos)
 if len(peaks_R) > 1:
     RR_intervals = np.diff(peaks_R) / Fs  # Convertir a segundos
-    print(f"✓ Intervalos RR calculados: {len(RR_intervals)} intervalos")
+    print(f"Intervalos RR calculados: {len(RR_intervals)} intervalos")
     print(f"  - RR promedio: {np.mean(RR_intervals):.3f} s")
     print(f"  - RR mínimo: {np.min(RR_intervals):.3f} s")
     print(f"  - RR máximo: {np.max(RR_intervals):.3f} s")
 else:
     RR_intervals = np.array([])
-    print("⚠️ No se detectaron suficientes picos R para calcular intervalos")
+    print("No se detectaron suficientes picos R para calcular intervalos")
 
 # Graficar detección de picos R
 fig3, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
@@ -219,13 +211,12 @@ plt.tight_layout()
 plt.show(block=False)
 
 # PASO 6: Detectar ondas P, Q, S, T
-print("\n=== DETECCIÓN DE ONDAS P, Q, S, T ===")
-print("✓ Buscando ondas P, Q, S, T alrededor de cada pico R...")
+print("\nDETECCIÓN DE ONDAS P, Q, S, T")
 
 # Ventana de búsqueda: ±400ms alrededor del pico R
 window_ms = 400  # milisegundos
 window_samples = int(window_ms * Fs / 1000)
-print(f"✓ Ventana de búsqueda: ±{window_ms} ms = ±{window_samples} muestras")
+print(f"Ventana de búsqueda: ±{window_ms} ms = ±{window_samples} muestras")
 
 # Listas para almacenar las detecciones
 P_peaks = []
@@ -285,7 +276,7 @@ for i, R_peak in enumerate(peaks_R):
                 T_idx_global = T_indices[T_idx_local]
                 T_peaks.append(T_idx_global)
 
-print(f"✓ Ondas detectadas:")
+print(f"Ondas detectadas:")
 print(f"  - Ondas P: {len(P_peaks)}")
 print(f"  - Ondas Q: {len(Q_peaks)}")
 print(f"  - Ondas R: {len(peaks_R)}")
@@ -328,7 +319,7 @@ plt.tight_layout()
 plt.show(block=False)
 
 # PASO 7: Análisis de Variabilidad Cardíaca (HRV) y Frecuencia Cardíaca
-print("\n=== ANÁLISIS DE VARIABILIDAD CARDÍACA (HRV) ===")
+print("\nANÁLISIS DE VARIABILIDAD CARDÍACA (HRV)")
 
 if len(RR_intervals) > 0:
     # Calcular frecuencia cardíaca instantánea
@@ -345,14 +336,14 @@ if len(RR_intervals) > 0:
     total_beats = len(peaks_R)
     HR_global = (total_beats / total_time) * 60  # bpm
 
-    print(f"✓ Análisis de Frecuencia Cardíaca:")
+    print(f"Análisis de Frecuencia Cardíaca:")
     print(f"  - Frecuencia cardíaca global: {HR_global:.1f} bpm")
     print(f"  - FC promedio (de intervalos RR): {HR_mean:.1f} bpm")
     print(f"  - FC mínima: {HR_min:.1f} bpm")
     print(f"  - FC máxima: {HR_max:.1f} bpm")
     print(f"  - Desviación estándar FC: {HR_std:.1f} bpm")
 
-    print(f"✓ Análisis de Intervalos RR:")
+    print(f"Análisis de Intervalos RR:")
     print(f"  - RMSSD: {np.sqrt(np.mean(np.diff(RR_intervals)**2))*1000:.1f} ms")
     print(f"  - SDNN: {np.std(RR_intervals)*1000:.1f} ms")
 
@@ -382,15 +373,15 @@ if len(RR_intervals) > 0:
     plt.show(block=False)
 
 else:
-    print("⚠️ No se pudieron calcular métricas de HRV - insuficientes picos R detectados")
+    print("No se pudieron calcular métricas de HRV - insuficientes picos R detectados")
 
-print("\n=== RESUMEN FINAL ===")
-print(f"✓ Señal procesada: ECG2")
-print(f"✓ Duración total: {vtime[-1]:.1f} segundos")
-print(f"✓ Picos R detectados: {len(peaks_R)}")
+print("\nRESUMEN FINAL")
+print(f"Señal procesada: ECG2")
+print(f"Duración total: {vtime[-1]:.1f} segundos")
+print(f"Picos R detectados: {len(peaks_R)}")
 if len(RR_intervals) > 0:
-    print(f"✓ Frecuencia cardíaca global: {HR_global:.1f} bpm")
-    print(f"✓ Intervalos RR analizados: {len(RR_intervals)}")
+    print(f"Frecuencia cardíaca global: {HR_global:.1f} bpm")
+    print(f"Intervalos RR analizados: {len(RR_intervals)}")
 
-print("\n¡Análisis Pan-Tompkins completado para ECG2!")
+print("\nAnálisis Pan-Tompkins completado para ECG2")
 plt.show()
