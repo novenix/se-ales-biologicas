@@ -93,7 +93,29 @@ peaks_R, properties = find_peaks(ecg_integrated,
                                 distance=min_distance,
                                 prominence=std_integrated*0.1)
 
-print(f"Picos R detectados: {len(peaks_R)}")
+print(f"Picos R detectados en señal integrada: {len(peaks_R)}")
+
+# CORRECCIÓN: Ajustar picos R a los máximos reales en la señal original
+# Los picos en ecg_integrated están desplazados por el filtrado e integración
+peaks_R_adjusted = []
+search_window = int(0.08 * Fs)  # Buscar ±80ms alrededor
+
+for peak in peaks_R:
+    start_idx = max(0, peak - search_window)
+    end_idx = min(len(ecg_signal), peak + search_window)
+
+    # Buscar el máximo REAL en la señal original
+    segment = ecg_signal[start_idx:end_idx]
+    max_idx_local = np.argmax(segment)
+    max_idx_global = start_idx + max_idx_local
+
+    peaks_R_adjusted.append(max_idx_global)
+
+peaks_R_adjusted = np.array(peaks_R_adjusted)
+peaks_R_original = peaks_R.copy()  # Guardar originales para gráfica de integrada
+peaks_R = peaks_R_adjusted  # Usar ajustados para el resto
+
+print(f"✓ Picos R ajustados a máximos reales: {len(peaks_R)}")
 
 # Calcular intervalos RR
 if len(peaks_R) > 1:
@@ -105,10 +127,8 @@ else:
     HR_instantaneous = np.array([])
     HR_global = 0
 
-# DETECCIÓN DE ONDAS P, Q, S, T
+# DETECCIÓN DE ONDAS P, Q, S, T (MEJORADA)
 print("\nDetectando ondas PQRST...")
-window_ms = 400
-window_samples = int(window_ms * Fs / 1000)
 
 P_peaks = []
 Q_peaks = []
@@ -116,54 +136,53 @@ S_peaks = []
 T_peaks = []
 
 for i, R_peak in enumerate(peaks_R):
-    start_idx = max(0, R_peak - window_samples)
-    end_idx = min(len(ecg_signal), R_peak + window_samples)
+    # Buscar P: 50-200ms antes de R (máximo positivo en señal filtrada)
+    P_search_start = max(0, R_peak - int(0.2 * Fs))  # 200ms antes
+    P_search_end = max(0, R_peak - int(0.05 * Fs))   # 50ms antes
 
-    segment = ecg_signal[start_idx:end_idx]
-    segment_indices = np.arange(start_idx, end_idx)
+    if P_search_start < P_search_end and P_search_end <= len(ecg_filtered):
+        P_segment = ecg_filtered[P_search_start:P_search_end]
+        if len(P_segment) > 5:
+            # P debe ser positivo y un máximo local
+            P_idx_local = np.argmax(P_segment)
+            if P_segment[P_idx_local] > 0:
+                P_peaks.append(P_search_start + P_idx_local)
 
-    # Buscar P: antes del R
-    pre_R_end = R_peak - start_idx
-    if pre_R_end > 10:
-        pre_R_segment = segment[:pre_R_end]
-        pre_R_indices = segment_indices[:pre_R_end]
+    # Buscar Q: 20-50ms antes de R (mínimo justo antes de R)
+    Q_search_start = max(0, R_peak - int(0.05 * Fs))  # 50ms antes
+    Q_search_end = R_peak
 
-        # P es un máximo antes de R
-        if len(pre_R_segment) > 0:
-            P_idx_local = np.argmax(pre_R_segment[:-10])
-            P_idx_global = pre_R_indices[P_idx_local]
-            P_peaks.append(P_idx_global)
-
-        # Q es un mínimo justo antes de R
-        Q_search_start = max(0, pre_R_end - 20)
-        Q_segment = segment[Q_search_start:pre_R_end]
-        if len(Q_segment) > 0:
+    if Q_search_start < Q_search_end:
+        Q_segment = ecg_filtered[Q_search_start:Q_search_end]
+        if len(Q_segment) > 3:
             Q_idx_local = np.argmin(Q_segment)
-            Q_idx_global = segment_indices[Q_search_start + Q_idx_local]
-            Q_peaks.append(Q_idx_global)
+            # Q debe ser menor que R
+            if Q_segment[Q_idx_local] < ecg_filtered[R_peak] * 0.7:
+                Q_peaks.append(Q_search_start + Q_idx_local)
 
-    # Buscar S y T: después del R
-    post_R_start = R_peak - start_idx
-    if post_R_start < len(segment) - 10:
-        post_R_segment = segment[post_R_start:]
-        post_R_indices = segment_indices[post_R_start:]
+    # Buscar S: 5-50ms después de R (mínimo justo después de R)
+    S_search_start = R_peak + 1
+    S_search_end = min(len(ecg_filtered), R_peak + int(0.05 * Fs))
 
-        # S es un mínimo justo después de R
-        S_search_end = min(len(post_R_segment), 20)
-        S_segment = post_R_segment[1:S_search_end]
-        if len(S_segment) > 0:
+    if S_search_start < S_search_end:
+        S_segment = ecg_filtered[S_search_start:S_search_end]
+        if len(S_segment) > 3:
             S_idx_local = np.argmin(S_segment)
-            S_idx_global = post_R_indices[1 + S_idx_local]
-            S_peaks.append(S_idx_global)
+            # S debe ser menor que R
+            if S_segment[S_idx_local] < ecg_filtered[R_peak] * 0.7:
+                S_peaks.append(S_search_start + S_idx_local)
 
-        # T es un máximo después de S
-        if len(post_R_segment) > 20:
-            T_segment = post_R_segment[20:]
-            T_indices = post_R_indices[20:]
-            if len(T_segment) > 0:
-                T_idx_local = np.argmax(T_segment)
-                T_idx_global = T_indices[T_idx_local]
-                T_peaks.append(T_idx_global)
+    # Buscar T: 100-350ms después de R (máximo positivo)
+    T_search_start = R_peak + int(0.1 * Fs)   # 100ms después
+    T_search_end = min(len(ecg_filtered), R_peak + int(0.35 * Fs))  # 350ms después
+
+    if T_search_start < T_search_end:
+        T_segment = ecg_filtered[T_search_start:T_search_end]
+        if len(T_segment) > 5:
+            T_idx_local = np.argmax(T_segment)
+            # T debe ser positivo
+            if T_segment[T_idx_local] > 0:
+                T_peaks.append(T_search_start + T_idx_local)
 
 print(f"Ondas detectadas: P={len(P_peaks)}, Q={len(Q_peaks)}, R={len(peaks_R)}, S={len(S_peaks)}, T={len(T_peaks)}")
 
@@ -280,11 +299,11 @@ fig3.add_trace(
     row=1, col=1
 )
 
-# Picos R en señal integrada
-if len(peaks_R) > 0:
+# Picos R en señal integrada (usar los originales, no los ajustados)
+if len(peaks_R_original) > 0:
     fig3.add_trace(
-        go.Scatter(x=vtime[peaks_R], y=ecg_integrated[peaks_R],
-                   mode='markers', name=f'Picos R ({len(peaks_R)})',
+        go.Scatter(x=vtime[peaks_R_original], y=ecg_integrated[peaks_R_original],
+                   mode='markers', name=f'Picos R ({len(peaks_R_original)})',
                    marker=dict(color='red', size=8)),
         row=1, col=1
     )
