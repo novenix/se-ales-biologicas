@@ -1,0 +1,30 @@
+Pontificia Universidad Javeriana - Bogotá
+Procesamiento de Señales Biológicas,
+Parcial Matlab 1 (20%)
+Septiembre 30 de 2025
+Profesor: Catalina Alvarado Rojas, PhD
+Nombre:
+El archivo Extra1.mat contiene registros de señales extracelulares, registradas simultáneamente con
+3 electrodos. Las señales fueron registradas durante el movimiento de la extremidad superior, 30
+segundos antes y 30 después del movimiento. Se quiere analizar el comportamiento de los
+potenciales de acción (AP) de las neuronas registradas, con el fin de diferenciar las neuronas
+‘inhibitorias’ y ‘excitatorias’, alrededor de este movimiento.
+Para esto, es necesario identificar las neuronas y comparar su frecuencia de descarga.
+1. (0.5) Grafique las señales de los 3 electrodos con respecto al tiempo. Agregue títulos y
+etiquetas en los ejes.
+2. (2.0) Utilice el algoritmo de Análisis de Componentes Independientes (ICA) para encontrar
+las fuentes independientes generadoras de señal. Identifique en qué fuente hay potenciales
+de acción y en cuál no. ¿A qué corresponde la señal que no tiene AP?
+• Si lo desea, realice este punto y el siguiente por medio de Spike Sorting (filtro y kmeans)
+3. (2.0) Encuentre los potenciales de acción de cada neurona y grafique el spike train
+correspondiente. Puede usar el resultado del punto anterior (revise si es necesario filtrar).
+4. (0.5) Para cada spike train, observe la frecuencia de descarga (firing rate) de los spikes e
+indique el tipo de neurona (excitatoria o inhibitoria) de cada una de las neuronas obtenidas.
+Instrucciones adicionales:
+• Justifique muy bien el procedimiento y adjunte las gráficas necesarias en este documento.
+• Genere el pdf desde el Live Script.
+• El código debe ser organizado y estar comentado.
+• Las figuras deben ser tener título, y ejes con unidades (no olvide usar linkaxes!).
+
+nuestra referencia es @taller1/ @taller2/ @taller3/ @taller4/ y de taller 4 el mejor fue @taller4_graficas_html.py  no para que te sesges sino para que veas los problemas del pasado
+lo que vamos a desarrollar es @parcial1/parcial.txt con el set de datos de @parcial1/Extra1.mat 
