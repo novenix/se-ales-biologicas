@@ -129,7 +129,29 @@ if len(peaks_R) > 0:
     valid_peaks = peaks_R[peak_heights > 0.5 * mean_height]
     peaks_R = valid_peaks
 
-print(f"Picos R detectados: {len(peaks_R)}")
+print(f"Picos R detectados en señal integrada: {len(peaks_R)}")
+
+# CORRECCIÓN: Ajustar picos R a los máximos reales en ecg_filtered
+# Los picos en ecg_integrated_norm están desplazados por el procesamiento
+peaks_R_adjusted = []
+search_window = int(0.08 * Fs)  # Buscar ±80ms alrededor
+
+for peak in peaks_R:
+    start_idx = max(0, peak - search_window)
+    end_idx = min(len(ecg_filtered), peak + search_window)
+
+    # Buscar el máximo REAL en la señal filtrada
+    segment = ecg_filtered[start_idx:end_idx]
+    max_idx_local = np.argmax(segment)
+    max_idx_global = start_idx + max_idx_local
+
+    peaks_R_adjusted.append(max_idx_global)
+
+peaks_R_adjusted = np.array(peaks_R_adjusted)
+peaks_R_original = peaks_R.copy()  # Guardar originales para gráfica de integrada
+peaks_R = peaks_R_adjusted  # Usar ajustados para el resto
+
+print(f"✓ Picos R ajustados a máximos reales: {len(peaks_R)}")
 
 # Calcular frecuencia cardíaca esperada
 if len(peaks_R) > 1:
@@ -274,11 +296,11 @@ fig2.add_trace(
     row=1, col=1
 )
 
-# Picos R detectados
-if len(peaks_R) > 0:
+# Picos R detectados (usar originales para señal integrada)
+if len(peaks_R_original) > 0:
     fig2.add_trace(
-        go.Scatter(x=vtime[peaks_R], y=ecg_integrated_norm[peaks_R],
-                   mode='markers', name=f'Picos R ({len(peaks_R)})',
+        go.Scatter(x=vtime[peaks_R_original], y=ecg_integrated_norm[peaks_R_original],
+                   mode='markers', name=f'Picos R ({len(peaks_R_original)})',
                    marker=dict(color='red', size=8)),
         row=1, col=1
     )
